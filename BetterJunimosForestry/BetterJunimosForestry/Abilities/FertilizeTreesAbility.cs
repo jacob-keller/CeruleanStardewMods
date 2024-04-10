@@ -10,7 +10,7 @@ using StardewValley.TerrainFeatures;
 
 namespace BetterJunimosForestry.Abilities {
     public class FertilizeTreesAbility : IJunimoAbility {
-        private const int tree_fertilizer = 805;
+        private const string tree_fertilizer = "805";
 
         public string AbilityName() {
             return "FertilizeTrees";
@@ -23,18 +23,18 @@ namespace BetterJunimosForestry.Abilities {
         }
 
         public bool PerformAction(GameLocation farm, Vector2 pos, JunimoHarvester junimo, Guid guid) {
-            var chest = Util.GetHutFromId(guid).output.Value;
-            var foundItem = chest.items.FirstOrDefault(item => item is {ParentSheetIndex: tree_fertilizer});
+            var chest = Util.GetHutFromId(guid).GetOutputChest();
+            var foundItem = chest.Items.FirstOrDefault(item => item is {ItemId: tree_fertilizer});
             if (foundItem == null) return false;
 
             if (farm.terrainFeatures[pos] is not Tree t) return false;
-            t.fertilize(farm);
+            t.fertilize();
             Util.RemoveItemFromChest(chest, foundItem);
             return true;
 
         }
 
-        public List<int> RequiredItems() {
+        public List<string> RequiredItems() {
             return new() { tree_fertilizer };
         }
         

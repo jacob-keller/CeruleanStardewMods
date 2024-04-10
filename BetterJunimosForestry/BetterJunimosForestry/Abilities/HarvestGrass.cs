@@ -49,7 +49,7 @@ namespace BetterJunimosForestry.Abilities {
             return true;
         }
 
-        public List<int> RequiredItems() {
+        public List<string> RequiredItems() {
             return new();
         }
         

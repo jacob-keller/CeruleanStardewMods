@@ -98,7 +98,7 @@ namespace BetterJunimosForestry.Abilities {
             return (tile * Game1.tileSize) + new Vector2(Game1.tileSize / 2f);
         }
 
-        public List<int> RequiredItems() {
+        public List<string> RequiredItems() {
             return new();
         }
         

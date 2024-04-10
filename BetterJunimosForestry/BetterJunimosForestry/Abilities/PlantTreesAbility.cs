@@ -63,10 +63,10 @@ namespace BetterJunimosForestry.Abilities
 
         public bool PerformAction(GameLocation location, Vector2 pos, JunimoHarvester junimo, Guid guid)
         {
-            var hut = Util.GetHutFromId(guid);
-            var chest = hut.output.Value;
-            var foundItem = chest.items.FirstOrDefault(item =>
-                item != null && Util.WildTreeSeeds.Keys.Contains(item.ParentSheetIndex));
+            JunimoHut hut = Util.GetHutFromId(guid);
+            var chest = hut.GetOutputChest();
+            var foundItem = chest.Items.FirstOrDefault(item =>
+                item != null && Util.WildTreeSeeds.Keys.Contains(item.ItemId));
             if (foundItem == null) return false;
 
             var (x, y) = pos;
@@ -80,7 +80,7 @@ namespace BetterJunimosForestry.Abilities
             {
                 if (!Util.IsWithinRadius(location, hut, nextPos)) continue;
                 if (!ShouldPlantWildTreeHere(location, hut, nextPos)) continue;
-                if (!Plant(location, nextPos, foundItem.ParentSheetIndex)) continue;
+                if (!Plant(location, nextPos, foundItem.ItemId)) continue;
                 Util.RemoveItemFromChest(chest, foundItem);
                 return true;
             }
@@ -118,7 +118,7 @@ namespace BetterJunimosForestry.Abilities
         {
             // is something standing on it? an impassable building? a terrain feature?
             // we want to use the game's occupied check, but also allow for un-hoeing empty hoedirt
-            if (location.isTileOccupied(pos) && !Util.IsHoed(location, pos)) return false;
+            if (location.IsTileOccupiedBy(pos) && !Util.IsHoed(location, pos)) return false;
 
             if (Util.HasCrop(location, pos)) return false;
             if (Util.IsOccupied(location, pos)) return false;
@@ -127,7 +127,7 @@ namespace BetterJunimosForestry.Abilities
             return true;
         }
 
-        private bool Plant(GameLocation location, Vector2 pos, int index)
+        private bool Plant(GameLocation location, Vector2 pos, string id)
         {
             // check if the tile needs to be un-hoed
             if (location.terrainFeatures.TryGetValue(pos, out var feature))
@@ -144,7 +144,7 @@ namespace BetterJunimosForestry.Abilities
                 return false;
             }
 
-            var tree = new Tree(Util.WildTreeSeeds[index], ModEntry.Config.PlantWildTreesSize);
+            var tree = new Tree(Util.WildTreeSeeds[id], ModEntry.Config.PlantWildTreesSize);
             location.terrainFeatures.Add(pos, tree);
 
             if (Utility.isOnScreen(Utility.Vector2ToPoint(pos), 64, location))
@@ -158,7 +158,7 @@ namespace BetterJunimosForestry.Abilities
         }
 
 
-        public List<int> RequiredItems()
+        public List<string> RequiredItems()
         {
             return Util.WildTreeSeeds.Keys.ToList();
         }

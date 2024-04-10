@@ -238,8 +238,8 @@ namespace BetterJunimosForestry {
                 Monitor.Log($"Could not load Better Junimos API", LogLevel.Error);
             }
             
-            icons = Helper.Content.Load<Texture2D>("assets/icons.png");
-            scroll = Helper.Content.Load<Texture2D>("assets/scroll2.png");
+            icons = Helper.ModContent.Load<Texture2D>("assets/icons.png");
+            scroll = Helper.ModContent.Load<Texture2D>("assets/scroll2.png");
 
             // BJApi.RegisterJunimoAbility(new Abilities.LayPathsAbility(Monitor));
             // Abilities now registered in OnSaveLoaded
@@ -327,7 +327,7 @@ namespace BetterJunimosForestry {
             }
 
             // reset for rainy days, winter, or GMCM options change
-            Helper.Content.InvalidateCache(@"Characters\Junimo");
+            Helper.GameContent.InvalidateCache(@"Characters\Junimo");
         }
         
         /*********

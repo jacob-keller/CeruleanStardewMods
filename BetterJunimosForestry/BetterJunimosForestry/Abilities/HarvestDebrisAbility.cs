@@ -18,7 +18,7 @@ namespace BetterJunimosForestry.Abilities {
         private readonly FakeFarmer FakeFarmer = new();
         private readonly Pickaxe FakePickaxe = new();
         private readonly Axe FakeAxe = new();
-        private readonly MeleeWeapon Scythe = new(47);
+        private readonly MeleeWeapon Scythe = new("47");
 
         internal HarvestDebrisAbility(IMonitor Monitor) {
             this.Monitor = Monitor;
@@ -93,7 +93,7 @@ namespace BetterJunimosForestry.Abilities {
 
                     if (IsWeed(item)) {
                         UseToolOnTile(Scythe, nextPos, location);
-                        item.performToolAction(Scythe, location);
+                        item.performToolAction(Scythe);
                         location.removeObject(nextPos, false);
                     }
                     
@@ -123,7 +123,7 @@ namespace BetterJunimosForestry.Abilities {
             return tile * Game1.tileSize + new Vector2(Game1.tileSize / 2f);
         }
 
-        public List<int> RequiredItems() {
+        public List<string> RequiredItems() {
             return new();
         }
         

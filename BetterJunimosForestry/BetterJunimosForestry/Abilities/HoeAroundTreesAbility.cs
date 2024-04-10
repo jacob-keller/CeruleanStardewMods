@@ -12,6 +12,7 @@ using StardewValley.TerrainFeatures;
 using StardewModdingAPI;
 using StardewValley.Buildings;
 using SObject = StardewValley.Object;
+using StardewValley.GameData.Crops;
 
 // bits of this are from Tractor Mod; https://github.com/Pathoschild/StardewMods/blob/68628a40f992288278b724984c0ade200e6e4296/TractorMod/Framework/BaseAttachment.cs#L132
 
@@ -20,8 +21,8 @@ namespace BetterJunimosForestry.Abilities
     public class HoeAroundTreesAbility : IJunimoAbility
     {
         private readonly IMonitor Monitor;
-        private static readonly List<int> WildTreeSeeds = new() {292, 309, 310, 311, 891};
-        private static readonly Dictionary<string, Dictionary<int, bool>> cropSeasons = new();
+        private static readonly List<string> WildTreeSeeds = new() {"292", "309", "310", "311", "891"};
+        private static readonly Dictionary<string, Dictionary<string, bool>> cropSeasons = new();
         private const int SunflowerSeeds = 431;
 
         internal HoeAroundTreesAbility(IMonitor Monitor)
@@ -30,7 +31,7 @@ namespace BetterJunimosForestry.Abilities
             var seasons = new List<string> {"spring", "summer", "fall", "winter"};
             foreach (string season in seasons)
             {
-                cropSeasons[season] = new Dictionary<int, bool>();
+                cropSeasons[season] = new Dictionary<string, bool>();
             }
         }
 
@@ -154,7 +155,7 @@ namespace BetterJunimosForestry.Abilities
                 return false;
             }
 
-            Chest chest = hut.output.Value;
+            Chest chest = hut.GetOutputChest();
             if (ModEntry.BJApi.GetCropMapForHut(guid) is null)
             {
                 foundItem = PlantableSeed(location, chest);
@@ -169,8 +170,8 @@ namespace BetterJunimosForestry.Abilities
         /// <summary>Get an item from the chest that is a crop seed, plantable in this season</summary>
         private Item PlantableSeed(GameLocation location, Chest chest, string cropType = null)
         {
-            List<Item> foundItems = chest.items.ToList().FindAll(item =>
-                item is {Category: SObject.SeedsCategory} && !WildTreeSeeds.Contains(item.ParentSheetIndex)
+            List<Item> foundItems = chest.Items.ToList().FindAll(item =>
+                item is {Category: SObject.SeedsCategory} && !WildTreeSeeds.Contains(item.ItemId)
             );
 
             if (cropType == CropTypes.Trellis)
@@ -194,7 +195,7 @@ namespace BetterJunimosForestry.Abilities
                     continue;
                 }
 
-                var key = foundItem.ParentSheetIndex;
+                var key = foundItem.ItemId;
                 try
                 {
                     if (cropSeasons[Game1.currentSeason][key])
@@ -204,22 +205,14 @@ namespace BetterJunimosForestry.Abilities
                 }
                 catch (KeyNotFoundException)
                 {
-                    Monitor.Log($"Cache miss: {foundItem.ParentSheetIndex} {Game1.currentSeason}", LogLevel.Trace);
-                    var crop = new Crop(foundItem.ParentSheetIndex, 0, 0);
-                    cropSeasons[Game1.currentSeason][key] = crop.seasonsToGrowIn.Contains(Game1.currentSeason);
+                    Monitor.Log($"Cache miss: {foundItem.ItemId} {Game1.currentSeason}", LogLevel.Trace);
+                    Game1.cropData.TryGetValue(foundItem.ItemId, out CropData cropData);
+                    cropSeasons[Game1.currentSeason][key] = cropData.Seasons.Contains(location.GetSeason());
                     if (cropSeasons[Game1.currentSeason][key])
                     {
                         return foundItem;
                     }
                 }
-
-                return foundItem;
-
-                //
-                // Crop crop = new Crop(foundItem.ParentSheetIndex, 0, 0);
-                // if (crop.seasonsToGrowIn.Contains(Game1.currentSeason)) {
-                //     return foundItem;
-                // }
             }
 
             return null;
@@ -227,14 +220,14 @@ namespace BetterJunimosForestry.Abilities
 
         private static bool IsTrellisCrop(Item item)
         {
-            var crop = new Crop(item.ParentSheetIndex, 0, 0);
-            return crop.raisedSeeds.Value;
+            Game1.cropData.TryGetValue(item.ItemId, out CropData cropData);
+            return cropData is not null && cropData.IsRaised;
         }
 
         private static bool CanHoeThisTile(GameLocation farm, Vector2 pos)
         {
             // is this tile plain dirt?
-            if (farm.isTileOccupied(pos)) return false;
+            if (farm.IsTileOccupiedBy(pos)) return false;
             if (Util.IsOccupied(farm, pos)) return false;
             if (!Util.CanBeHoed(farm, pos)) return false;
             if (farm.doesTileHaveProperty((int) pos.X, (int) pos.Y, "Diggable", "Back") != null) return true;
@@ -275,21 +268,11 @@ namespace BetterJunimosForestry.Abilities
                 location.playSound("hoeHit");
             }
 
-            removeSquareDebrisFromTile(location, (int) tileLocation.X, (int) tileLocation.Y);
             location.checkForBuriedItem((int) tileLocation.X, (int) tileLocation.Y, false, false, Game1.player);
             return true;
         }
 
-        private static void removeSquareDebrisFromTile(GameLocation location, int tileX, int tileY)
-        {
-            location.debris.Filter(
-                debris =>
-                    debris.debrisType.Value != Debris.DebrisType.SQUARES 
-                        || (int) (debris.Chunks[0].position.X / 64.0) != tileX 
-                        || debris.chunkFinalYLevel / 64 != tileY);
-        }
-
-        public List<int> RequiredItems()
+        public List<string> RequiredItems()
         {
             return new();
         }

@@ -51,7 +51,7 @@ namespace BetterJunimosForestry.Abilities
             if (t is not Tree tree) return false;
             if (tree.growthStage.Value != 0) return false;
             if (mode == Modes.Normal) return false;
-            if (mode == Modes.Forest && PlantTreesAbility.IsTileInPattern(t.currentTileLocation)) return false;
+            if (mode == Modes.Forest && PlantTreesAbility.IsTileInPattern(t.Tile)) return false;
             return true;
         }
         
@@ -66,7 +66,7 @@ namespace BetterJunimosForestry.Abilities
             return tile * Game1.tileSize + new Vector2(Game1.tileSize / 2f);
         }
 
-        public List<int> RequiredItems()
+        public List<string> RequiredItems()
         {
             return new();
         }

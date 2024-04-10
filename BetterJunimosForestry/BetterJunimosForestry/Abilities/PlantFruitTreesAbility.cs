@@ -14,7 +14,7 @@ namespace BetterJunimosForestry.Abilities
 {
     public class PlantFruitTreesAbility : IJunimoAbility
     {
-        private List<int> _RequiredItems;
+        private List<string> _RequiredItems;
         private readonly IMonitor Monitor;
 
         internal PlantFruitTreesAbility(IMonitor Monitor)
@@ -98,8 +98,8 @@ namespace BetterJunimosForestry.Abilities
         public bool PerformAction(GameLocation location, Vector2 pos, JunimoHarvester junimo, Guid guid)
         {
             var hut = Util.GetHutFromId(guid);
-            var chest = hut.output.Value;
-            var foundItem = chest.items.FirstOrDefault(item => item != null && RequiredItems().Contains(item.ParentSheetIndex));
+            var chest = hut.GetOutputChest();
+            var foundItem = chest.Items.FirstOrDefault(item => item != null && RequiredItems().Contains(item.ItemId));
             if (foundItem == null) return false;
 
             var up = new Vector2(pos.X, pos.Y + 1);
@@ -110,19 +110,19 @@ namespace BetterJunimosForestry.Abilities
             Vector2[] positions = {up, right, down, left};
             if (!positions.Where(nextPos => Util.IsWithinRadius(location, hut, pos))
                 .Where(nextPos => ShouldPlantFruitTreeOnTile(location, hut, nextPos))
-                .Any(nextPos => Plant(location, nextPos, foundItem.ParentSheetIndex))) return false;
+                .Any(nextPos => Plant(location, nextPos, foundItem.ItemId))) return false;
             Util.RemoveItemFromChest(chest, foundItem);
             return true;
         }
 
-        private static bool Plant(GameLocation farm, Vector2 pos, int index)
+        private static bool Plant(GameLocation farm, Vector2 pos, string id)
         {
             if (farm.terrainFeatures.Keys.Contains(pos))
             {
                 return false;
             }
 
-            var tree = new FruitTree(index, ModEntry.Config.PlantFruitTreesSize);
+            var tree = new FruitTree(id, ModEntry.Config.PlantFruitTreesSize);
             farm.terrainFeatures.Add(pos, tree);
 
             if (!Utility.isOnScreen(Utility.Vector2ToPoint(pos), 64, farm)) return true;
@@ -132,11 +132,11 @@ namespace BetterJunimosForestry.Abilities
             return true;
         }
         
-        public List<int> RequiredItems()
+        public List<string> RequiredItems()
         {
             // this is heavy, cache it
             if (_RequiredItems is not null) return _RequiredItems;
-            var saplings = Game1.objectInformation.Where(pair => pair.Value.Split('/')[0].Contains("Sapling"));
+            var saplings = Game1.objectData.Where(pair => pair.Value.Name.Contains("Sapling"));
             _RequiredItems = (from kvp in saplings select kvp.Key).ToList();
             return _RequiredItems;
         }

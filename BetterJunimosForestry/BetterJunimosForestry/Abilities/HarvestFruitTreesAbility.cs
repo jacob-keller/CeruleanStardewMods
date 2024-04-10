@@ -22,7 +22,7 @@ namespace BetterJunimosForestry.Abilities {
         }
 
         private static bool IsHarvestableFruitTree(TerrainFeature tf) {
-            return tf is FruitTree tree && tree.fruitsOnTree.Value > 0;
+            return tf is FruitTree tree && tree.fruit.Any();
         }
 
         public bool IsActionAvailable(GameLocation location, Vector2 pos, Guid guid) {
@@ -61,40 +61,21 @@ namespace BetterJunimosForestry.Abilities {
             return false;
         }
 
-        /// <summary>Harvest fruit from a FruitTree and update the tree accordingly.</summary>
-        private static SObject GetFruitFromTree(FruitTree tree) {
-            if (tree.fruitsOnTree.Value == 0)
-                return null;
-
-            var quality = 0;
-            if (tree.daysUntilMature.Value <= -112)
-                quality = 1;
-            if (tree.daysUntilMature.Value <= -224)
-                quality = 2;
-            if (tree.daysUntilMature.Value <= -336)
-                quality = 4;
-            if (tree.struckByLightningCountdown.Value > 0)
-                quality = 0;
-
-            tree.fruitsOnTree.Value --;
-
-            var result = new SObject(Vector2.Zero, tree.struckByLightningCountdown.Value > 0 ? 382 : tree.indexOfFruit.Value, 1) { Quality = quality };
-            return result;
-        }
-
         private static bool HarvestFromTree(Vector2 pos, JunimoHarvester junimo, FruitTree tree) {
-            //shake the tree without it releasing any fruit
-            var fruitsOnTree = tree.fruitsOnTree.Value;
-            tree.fruitsOnTree.Value = 0;
-            tree.performUseAction(pos, junimo.currentLocation);
-            tree.fruitsOnTree.Value = fruitsOnTree;
-            var result = GetFruitFromTree(tree);
-            if (result == null) return false;
-            junimo.tryToAddItemToHut(result);
+            // do nothing if the tree has no item
+            if (!tree.fruit.Any())
+                return false;
+
+            // take all the item first
+            foreach (var item in tree.fruit)
+                junimo.tryToAddItemToHut(item);
+            tree.fruit.Clear();
+            // shake the tree after
+            tree.performUseAction(pos);
             return true;
         }
 
-        public List<int> RequiredItems() {
+        public List<string> RequiredItems() {
             return new();
         }
         

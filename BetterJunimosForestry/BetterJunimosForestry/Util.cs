@@ -24,13 +24,13 @@ namespace BetterJunimosForestry {
     }
     
     public static class Util {
-        internal static readonly Dictionary<int, int> WildTreeSeeds = new()
+        internal static readonly Dictionary<string, string> WildTreeSeeds = new()
         {
-            {292, 8}, // mahogany
-            {309, 1}, // acorn
-            {310, 2}, // maple
-            {311, 3}, // pine
-            {891, 7}  // mushroom
+            {"292", "8"}, // mahogany
+            {"309", "1"}, // acorn
+            {"310", "2"}, // maple
+            {"311", "3"}, // pine
+            {"891", "7"}  // mushroom
         };
         
         /// <summary>Get whether a tile is blocked due to something it contains.</summary>
@@ -44,7 +44,7 @@ namespace BetterJunimosForestry {
                 return true;
 
             // objects & large terrain features
-            if (location.objects.ContainsKey(tile) || location.largeTerrainFeatures.Any(p => p.tilePosition.Value == tile))
+            if (location.objects.ContainsKey(tile) || location.largeTerrainFeatures.Any(p => p.Tile == tile))
                 return true;
             
             // logs, boulders, etc
@@ -62,11 +62,8 @@ namespace BetterJunimosForestry {
             }
 
             // buildings
-            if (location is BuildableGameLocation buildableLocation)
-            {
-                if (buildableLocation.buildings.Any(building => building.occupiesTile(tile)))
+             if (location.buildings.Any(building => building.occupiesTile(tile)))
                     return true;
-            }
 
             // buildings from the map
             if (location.getTileIndexAt(Utility.Vector2ToPoint(tile), "Buildings") > -1) return true;
@@ -221,19 +218,19 @@ namespace BetterJunimosForestry {
             return null;
         }
         
-        public static void AddItemToChest(GameLocation farm, Chest chest, SObject item) {
+        public static void AddItemToChest(GameLocation farm, Chest chest, Item item) {
             Item obj = chest.addItem(item);
             if (obj == null) return;
             Vector2 pos = chest.TileLocation;
             for (int index = 0; index < obj.Stack; ++index)
-                Game1.createObjectDebris(item.ParentSheetIndex, (int)pos.X + 1, (int)pos.Y + 1, -1, item.Quality, 1f, farm);
+                Game1.createObjectDebris(item.ItemId, (int)pos.X + 1, (int)pos.Y + 1, -1, item.Quality, 1f, farm);
         }
 
         public static void RemoveItemFromChest(Chest chest, Item item) {
             if (ModEntry.Config.InfiniteJunimoInventory) { return; }
             item.Stack--;
             if (item.Stack == 0) {
-                chest.items.Remove(item);
+                chest.Items.Remove(item);
             }
         }
         

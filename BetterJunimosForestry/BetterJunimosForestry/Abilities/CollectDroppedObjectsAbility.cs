@@ -45,7 +45,7 @@ namespace BetterJunimosForestry.Abilities {
         }
 
         public bool PerformAction(GameLocation location, Vector2 pos, JunimoHarvester junimo, Guid guid) {
-            var chest = Util.GetHutFromId(guid).output.Value;
+            var chest = Util.GetHutFromId(guid).GetOutputChest();
 
             var (x, y) = pos;
             var up = new Vector2(x, y + 1);
@@ -57,7 +57,7 @@ namespace BetterJunimosForestry.Abilities {
             Vector2[] positions = { up, right, down, left };
             foreach (var nextPos in positions) {
                 if (!Util.IsWithinRadius(location, Util.GetHutFromId(guid), nextPos)) continue;
-                if (DebrisIndexAtTile(nextPos) > 0) {
+                if (DebrisIndexAtTile(nextPos) != "") {
                     junimo.faceDirection(direction);
                     return MoveDebrisFromTileToChest(nextPos, location, chest);
                 }
@@ -67,13 +67,13 @@ namespace BetterJunimosForestry.Abilities {
         }
 
         protected bool IsDebrisAtTile(Vector2 tile) {
-            return DebrisIndexAtTile(tile) > 0;
+            return DebrisIndexAtTile(tile) != "";
         }
 
-        protected int DebrisIndexAtTile(Vector2 tile) { 
+        protected string DebrisIndexAtTile(Vector2 tile) {
             // Monitor.Log($"IsDebrisAtTile {tile}", LogLevel.Debug);
             if (Game1.currentLocation.debris is null) {
-                return -1;
+                return "";
             }
             foreach (Debris d in Game1.currentLocation.debris) {
                 foreach (Chunk c in d.Chunks) {
@@ -83,16 +83,12 @@ namespace BetterJunimosForestry.Abilities {
                         // Monitor.Log($"        Debris chunks: {d.Chunks.Count} type: {d.debrisType} at {dx},{dy}", LogLevel.Debug);
                         if (d.item is not null) {
                             // Monitor.Log($"            {d.item.Name} [{d.item.ParentSheetIndex}]", LogLevel.Debug);
-                            return d.item.ParentSheetIndex;
-                        }
-                        else {
-                            // Monitor.Log($"            non-item debris [{c.debrisType}]", LogLevel.Debug);
-                            return c.debrisType;
+                            return d.item.ItemId;
                         }
                     }
                 }
             }
-            return 0;
+            return "";
         }
 
         protected bool MoveDebrisFromTileToChest(Vector2 tile, GameLocation farm, Chest chest) {
@@ -123,20 +119,14 @@ namespace BetterJunimosForestry.Abilities {
         protected void MoveDebrisToChest(Debris d, GameLocation farm, Chest chest) {
             foreach (Chunk c in d.Chunks) {
                 if (d.item is not null) {
-                    SObject item = new SObject(d.item.ParentSheetIndex, 1);
+                    SObject item = new SObject(d.item.ItemId, 1);
                     Util.AddItemToChest(farm, chest, item);
                     //Monitor.Log($"            MoveDebrisToChest {d.item.Name} [{d.item.ParentSheetIndex}]", LogLevel.Debug);
-                } else {
-                    SObject item = new SObject(c.debrisType, 1);
-                    if (item.Name != "Error Item") {
-                        Util.AddItemToChest(farm, chest, item);
-                        //Monitor.Log($"            MoveDebrisToChest {item.Name} [{c.debrisType}]", LogLevel.Debug);
-                    }
                 }
             }
         }
         
-        public List<int> RequiredItems() {
+        public List<string> RequiredItems() {
             return new();
         }
         
